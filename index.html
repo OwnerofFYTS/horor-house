@@ -1,81 +1,88 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fast your typing speed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horror House Exploration</title>
     <style>
-        body { 
-            background-color: black; 
-            font-family: 'Segoe UI', Arial; 
-            color: white; 
-            margin: 0; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center; 
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
         }
-        nav { 
-            display: flex; 
-            flex-direction: column; 
-            position: fixed; 
-            left: 20px; 
-            top: 50%; 
-            transform: translateY(-50%);
-            text-align: left; 
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0000;
+            font-family: sans-serif;
+            font-size: 24px;
+            pointer-events: none;
         }
-        nav a { 
-            margin: 10px 0; 
-            color: #ff4757; 
-            text-decoration: none; 
-            font-weight: bold; 
-            font-size: 18px;
-            transition: 0.3s;
-        }
-        nav a:hover { color: white; }
-        
-        .hero h1 { 
-            color: #3498db; 
-            font-size: 60px; 
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .hero p { 
-            color: #2ecc71; 
-            font-size: 24px; 
-            margin-bottom: 30px;
-        }
-        .start-btn {
-            padding: 15px 40px; 
-            font-size: 20px;
-            cursor: pointer; 
-            background: #2ecc71; 
-            color: white; 
-            border: none; 
-            border-radius: 50px;
-            font-weight: bold;
-            transition: 0.3s;
-            text-decoration: none;
-        }
-        .start-btn:hover {
-            background: #27ae60;
-            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-family: sans-serif;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="about.html">Typing Practice</a>
-    </nav>
 
-    <div class="hero">
-        <h1>Welcome to Fast Your Speed</h1>
-        <p>Master the keyboard and boost your WPM</p>
-        <br>
-        <a href="about.html" class="start-btn">Get Started</a>
-    </div>
-</body>
-</html>
+    <div id="loading">Loading Haunted House...</div>
+    <div id="instructions">Screen par Click karein aur WASD keys se ghar ke andar chalein</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // 1. Scene, Camera, aur Renderer Setup
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050505, 0.04); // Horror dundh (Fog)
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 12); // Player ki starting height (2) aur door se thoda peeche
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // 2. PointerLock Controls (FPS Game jaisa movement)
+        const controls = new PointerLockControls(camera, document.body);
+
+        // Click karne par mouse lock hoga taaki look movement chal sake
+        document.body.addEventListener('click', () => {
+            controls.lock();
+        });
+
+        // 3. Movement Logic Variables
+        const moveSpeed = 0.15; // Player ki chalne ki speed
+        const keysPressed = { w: false, a: false, s: false, d: false };
+
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (key in keysPressed) keysPressed[key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            Normally I can help with things like this, but I don't seem to have access to that content. You can try again or ask me for something else.
