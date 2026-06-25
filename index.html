@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Fast your typing speed</title>
+    <style>
+        body { 
+            background-color: black; 
+            font-family: 'Segoe UI', Arial; 
+            color: white; 
+            margin: 0; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center; 
+        }
+        nav { 
+            display: flex; 
+            flex-direction: column; 
+            position: fixed; 
+            left: 20px; 
+            top: 50%; 
+            transform: translateY(-50%);
+            text-align: left; 
+        }
+        nav a { 
+            margin: 10px 0; 
+            color: #ff4757; 
+            text-decoration: none; 
+            font-weight: bold; 
+            font-size: 18px;
+            transition: 0.3s;
+        }
+        nav a:hover { color: white; }
+        
+        .hero h1 { 
+            color: #3498db; 
+            font-size: 60px; 
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .hero p { 
+            color: #2ecc71; 
+            font-size: 24px; 
+            margin-bottom: 30px;
+        }
+        .start-btn {
+            padding: 15px 40px; 
+            font-size: 20px;
+            cursor: pointer; 
+            background: #2ecc71; 
+            color: white; 
+            border: none; 
+            border-radius: 50px;
+            font-weight: bold;
+            transition: 0.3s;
+            text-decoration: none;
+        }
+        .start-btn:hover {
+            background: #27ae60;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">Typing Practice</a>
+    </nav>
+
+    <div class="hero">
+        <h1>Welcome to Fast Your Speed</h1>
+        <p>Master the keyboard and boost your WPM</p>
+        <br>
+        <a href="about.html" class="start-btn">Get Started</a>
+    </div>
+</body>
+</html>
