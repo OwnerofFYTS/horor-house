@@ -3,228 +3,222 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D GLB Viewer</title>
+<title>GLB House Viewer</title>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 body{
+    margin:0;
     overflow:hidden;
-    background:#000;
 }
-
 #info{
     position:absolute;
     top:10px;
     left:10px;
     color:white;
-    font-family:Arial, sans-serif;
-    background:rgba(0,0,0,.5);
+    background:rgba(0,0,0,.7);
     padding:10px;
-    border-radius:5px;
-    z-index:10;
+    z-index:100;
 }
 </style>
 </head>
 <body>
 
 <div id="info">
-    Click Screen<br>
-    WASD = Move<br>
-    Mouse = Look Around
+Click Screen<br>
+W A S D = Move<br>
+Mouse = Look
 </div>
 
 <script type="module">
 
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
-import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
-import { PointerLockControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js";
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { PointerLockControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
 
 const scene = new THREE.Scene();
-
-scene.background = new THREE.Color(0x666666);
+scene.background = new THREE.Color(0x777777);
 
 const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    5000
+75,
+window.innerWidth/window.innerHeight,
+0.1,
+10000
 );
 
-camera.position.set(0, 2, 5);
+camera.position.set(0,2,5);
 
 const renderer = new THREE.WebGLRenderer({
-    antialias:true
+antialias:true
 });
 
 renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
+window.innerWidth,
+window.innerHeight
 );
 
-renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
 
-document.body.appendChild(
-    renderer.domElement
+/* LIGHTS */
+
+scene.add(new THREE.AmbientLight(0xffffff,8));
+
+const light = new THREE.DirectionalLight(
+0xffffff,
+10
 );
 
-/* LIGHTING */
+light.position.set(20,50,20);
+scene.add(light);
 
-const ambientLight = new THREE.AmbientLight(
-    0xffffff,
-    8
+scene.add(
+new THREE.HemisphereLight(
+0xffffff,
+0x444444,
+8
+)
 );
-scene.add(ambientLight);
-
-const hemiLight = new THREE.HemisphereLight(
-    0xffffff,
-    0x444444,
-    6
-);
-scene.add(hemiLight);
-
-const dirLight = new THREE.DirectionalLight(
-    0xffffff,
-    10
-);
-
-dirLight.position.set(
-    20,
-    50,
-    20
-);
-
-scene.add(dirLight);
-
-/* GROUND */
-
-const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(5000,5000),
-    new THREE.MeshStandardMaterial({
-        color:0x888888
-    })
-);
-
-ground.rotation.x = -Math.PI/2;
-ground.position.y = -0.1;
-scene.add(ground);
 
 /* CONTROLS */
 
-const controls = new PointerLockControls(
-    camera,
-    document.body
+const controls =
+new PointerLockControls(
+camera,
+document.body
 );
 
-document.body.addEventListener("click",()=>{
-    controls.lock();
-});
+document.addEventListener(
+'click',
+()=>controls.lock()
+);
 
 scene.add(
-    controls.getObject()
+controls.getObject()
 );
 
 /* MOVEMENT */
 
 const keys = {};
 
-document.addEventListener("keydown",(e)=>{
-    keys[e.code] = true;
+document.addEventListener('keydown',e=>{
+keys[e.code]=true;
 });
 
-document.addEventListener("keyup",(e)=>{
-    keys[e.code] = false;
+document.addEventListener('keyup',e=>{
+keys[e.code]=false;
 });
 
 const speed = 0.15;
 
-/* LOAD MODEL */
+/* LOAD GLB */
 
 const loader = new GLTFLoader();
 
 loader.load(
-    "./haunted_house.glb",
 
-    (gltf)=>{
+'./haunted_house.glb',
 
-        const model = gltf.scene;
+(gltf)=>{
 
-        model.position.set(0,0,0);
+const model = gltf.scene;
 
-        model.scale.set(
-            1,
-            1,
-            1
-        );
+/* AUTO CENTER */
 
-        model.traverse((child)=>{
+const box =
+new THREE.Box3().setFromObject(model);
 
-            if(child.isMesh){
-
-                child.castShadow = true;
-                child.receiveShadow = true;
-
-                if(child.material){
-
-                    child.material.side =
-                    THREE.DoubleSide;
-
-                    child.material.needsUpdate =
-                    true;
-                }
-            }
-        });
-
-        scene.add(model);
-
-        console.log("GLB Loaded");
-        console.log(model);
-
-    },
-
-    (xhr)=>{
-        console.log(
-            (xhr.loaded/xhr.total*100)
-            + "% loaded"
-        );
-    },
-
-    (error)=>{
-        console.error(error);
-    }
+const center =
+box.getCenter(
+new THREE.Vector3()
 );
 
-/* ANIMATION */
+model.position.sub(center);
+
+/* AUTO SCALE */
+
+const size =
+box.getSize(
+new THREE.Vector3()
+);
+
+const maxAxis =
+Math.max(
+size.x,
+size.y,
+size.z
+);
+
+const scale =
+20/maxAxis;
+
+model.scale.setScalar(scale);
+
+scene.add(model);
+
+console.log("Loaded");
+console.log(size);
+
+},
+
+(xhr)=>{
+console.log(
+(xhr.loaded/xhr.total*100)
+.toFixed(0)+"%"
+);
+},
+
+(err)=>{
+console.error(err);
+alert("GLB Load Error");
+}
+
+);
+
+/* FLOOR */
+
+const floor = new THREE.Mesh(
+new THREE.PlaneGeometry(
+1000,
+1000
+),
+new THREE.MeshStandardMaterial({
+color:0x999999
+})
+);
+
+floor.rotation.x = -Math.PI/2;
+floor.position.y = -2;
+
+scene.add(floor);
+
+/* LOOP */
 
 function animate(){
 
-    requestAnimationFrame(
-        animate
-    );
+requestAnimationFrame(
+animate
+);
 
-    if(controls.isLocked){
+if(controls.isLocked){
 
-        if(keys["KeyW"])
-            controls.moveForward(speed);
+if(keys['KeyW'])
+controls.moveForward(speed);
 
-        if(keys["KeyS"])
-            controls.moveForward(-speed);
+if(keys['KeyS'])
+controls.moveForward(-speed);
 
-        if(keys["KeyA"])
-            controls.moveRight(-speed);
+if(keys['KeyA'])
+controls.moveRight(-speed);
 
-        if(keys["KeyD"])
-            controls.moveRight(speed);
-    }
+if(keys['KeyD'])
+controls.moveRight(speed);
 
-    renderer.render(
-        scene,
-        camera
-    );
+}
+
+renderer.render(
+scene,
+camera
+);
+
 }
 
 animate();
@@ -232,20 +226,21 @@ animate();
 /* RESIZE */
 
 window.addEventListener(
-    "resize",
-    ()=>{
+'resize',
+()=>{
 
-        camera.aspect =
-        window.innerWidth /
-        window.innerHeight;
+camera.aspect =
+window.innerWidth/
+window.innerHeight;
 
-        camera.updateProjectionMatrix();
+camera.updateProjectionMatrix();
 
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
-    }
+renderer.setSize(
+window.innerWidth,
+window.innerHeight
+);
+
+}
 );
 
 </script>
