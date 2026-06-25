@@ -10,17 +10,6 @@
             overflow: hidden;
             background-color: #050505;
         }
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ff0000;
-            font-family: sans-serif;
-            font-size: 24px;
-            pointer-events: none;
-            z-index: 10;
-        }
         #instructions {
             position: absolute;
             bottom: 20px;
@@ -28,19 +17,21 @@
             transform: translateX(-50%);
             color: white;
             font-family: sans-serif;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 25px;
             border-radius: 5px;
             text-align: center;
             pointer-events: none;
             font-size: 16px;
+            z-index: 5;
+            border: 1px solid #ff0000;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
         }
     </style>
 </head>
 <body>
 
-    <div id="loading">Loading Haunted House...</div>
-    <div id="instructions">Screen par CLICK karein, phir WASD se chalein aur MOUSE se dekhein</div>
+    <div id="instructions">Game Start karne ke liye SCREEN PAR CLICK karein<br><small style="color: #aaa;">Chalne ke liye WASD aur dekhne ke liye MOUSE ghumayein</small></div>
 
     <script type="importmap">
         {
@@ -53,31 +44,35 @@
 
     <script type="module">
         import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
         // 1. Scene, Camera, aur Renderer Setup
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050505, 0.03); // Horror dundh
+        scene.fog = new THREE.FogExp2(0x050505, 0.1); // Halaki dundh horror feel ke liye
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 2, 15); // Player ki height (2) aur entry point se thoda peeche
+        camera.position.set(0, 2, 10); // Player starting point
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        // 2. PointerLock Controls (FPS Game Look)
+        // 2. PointerLock Controls (Mouse Lock)
         const controls = new PointerLockControls(camera, document.body);
 
-        // Screen click karne par mouse lock hoga taaki control chal sake
+        // Click karne par control chalu hoga
         document.body.addEventListener('click', () => {
             controls.lock();
         });
 
+        // Instructions tabhi chupenge jab game active hogi
+        const instructions = document.getElementById('instructions');
+        controls.addEventListener('lock', () => { instructions.style.display = 'none'; });
+        controls.addEventListener('unlock', () => { instructions.style.display = 'block'; });
+
         // 3. WASD Movement Logic
-        const moveSpeed = 0.2; // Chalne ki speed
+        const moveSpeed = 0.15; 
         const keysPressed = { w: false, a: false, s: false, d: false };
 
         window.addEventListener('keydown', (e) => {
@@ -87,3 +82,81 @@
 
         window.addEventListener('keyup', (e) => {
             const key = e.key.toLowerCase();
+            if (key in keysPressed) keysPressed[key] = false;
+        });
+
+        // 4. Horror Environment Creator (Bina model ke bhi game chalegi)
+        // Zameen (Floor)
+        const floorGeo = new THREE.PlaneGeometry(100, 100);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Map me Pillars/Deewarein lagane ke liye loop
+        const boxGeo = new THREE.BoxGeometry(2, 8, 2);
+        const boxMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+        
+        for(let i = 0; i < 15; i++) {
+            const pillar = new THREE.Mesh(boxGeo, boxMat);
+            // Randomly pillars ko phela diya hai taaki maze jaisa lage
+            pillar.position.set((Math.random() - 0.5) * 40, 4, (Math.random() - 0.5) * 40);
+            pillar.castShadow = true;
+            pillar.receiveShadow = true;
+            scene.add(pillar);
+        }
+
+        // 5. Lights
+        // Halka Dim Ambient Light (Raat ka mahaul)
+        const ambientLight = new THREE.AmbientLight(0x111122); 
+        scene.add(ambientLight);
+
+        // Chand ki Roshni (Directional Light) taaki pillars ki shadow bane
+        const moonLight = new THREE.DirectionalLight(0x334466, 0.5);
+        moonLight.position.set(10, 20, 10);
+        scene.add(moonLight);
+
+        // Player ki Flashlight (Torch) jo hamesha camera ke sath ghumegi
+        const flashlight = new THREE.SpotLight(0xfff5ea, 4, 25, Math.PI / 5, 0.5, 1);
+        flashlight.castShadow = true;
+        scene.add(flashlight);
+        scene.add(flashlight.target); // Target vector required for spotlight direction
+
+        // 6. Window Resize Handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 7. Game Loop (Yahan se real game chalti hai)
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (controls.isLocked) {
+                // Movement handling
+                if (keysPressed.w) controls.moveForward(moveSpeed);
+                if (keysPressed.s) controls.moveForward(-moveSpeed);
+                if (keysPressed.a) controls.moveRight(-moveSpeed);
+                if (keysPressed.d) controls.moveRight(moveSpeed);
+            }
+
+            // Flashlight ko player/camera ki jagah par lock karna
+            flashlight.position.copy(camera.position);
+            
+            // Flashlight ka direction wahi rakhna jahan player dekh raha hai
+            const targetDirection = new THREE.Vector3();
+            camera.getWorldDirection(targetDirection);
+            targetDirection.add(camera.position);
+            flashlight.target.position.copy(targetDirection);
+
+            // Render Frame
+            renderer.render(scene, camera);
+        }
+
+        // Game loop ko start karein
+        animate();
+    </script>
+</body>
+</html>
