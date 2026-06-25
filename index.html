@@ -3,132 +3,250 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Haunted House 3D</title>
+<title>3D GLB Viewer</title>
 
 <style>
-    body {
-        margin: 0;
-        overflow: hidden;
-    }
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
 
-    #info {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        color: white;
-        font-family: Arial, sans-serif;
-        z-index: 100;
-    }
+body{
+    overflow:hidden;
+    background:#000;
+}
+
+#info{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-family:Arial, sans-serif;
+    background:rgba(0,0,0,.5);
+    padding:10px;
+    border-radius:5px;
+    z-index:10;
+}
 </style>
 </head>
 <body>
 
 <div id="info">
-    Click Screen → WASD Move → Mouse Look
+    Click Screen<br>
+    WASD = Move<br>
+    Mouse = Look Around
 </div>
 
 <script type="module">
 
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+import { PointerLockControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js";
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111);
+
+scene.background = new THREE.Color(0x666666);
 
 const camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     0.1,
-    1000
+    5000
 );
 
 camera.position.set(0, 2, 5);
 
-const renderer = new THREE.WebGLRenderer({ antialias:true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+const renderer = new THREE.WebGLRenderer({
+    antialias:true
+});
 
-// Lights
-const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.shadowMap.enabled = true;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+/* LIGHTING */
+
+const ambientLight = new THREE.AmbientLight(
+    0xffffff,
+    8
+);
 scene.add(ambientLight);
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 2);
-dirLight.position.set(5,10,5);
+const hemiLight = new THREE.HemisphereLight(
+    0xffffff,
+    0x444444,
+    6
+);
+scene.add(hemiLight);
+
+const dirLight = new THREE.DirectionalLight(
+    0xffffff,
+    10
+);
+
+dirLight.position.set(
+    20,
+    50,
+    20
+);
+
 scene.add(dirLight);
 
-// Controls
-const controls = new PointerLockControls(camera, document.body);
+/* GROUND */
 
-document.addEventListener('click', () => {
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(5000,5000),
+    new THREE.MeshStandardMaterial({
+        color:0x888888
+    })
+);
+
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -0.1;
+scene.add(ground);
+
+/* CONTROLS */
+
+const controls = new PointerLockControls(
+    camera,
+    document.body
+);
+
+document.body.addEventListener("click",()=>{
     controls.lock();
 });
 
-scene.add(controls.getObject());
+scene.add(
+    controls.getObject()
+);
 
-// Load GLB
+/* MOVEMENT */
+
+const keys = {};
+
+document.addEventListener("keydown",(e)=>{
+    keys[e.code] = true;
+});
+
+document.addEventListener("keyup",(e)=>{
+    keys[e.code] = false;
+});
+
+const speed = 0.15;
+
+/* LOAD MODEL */
+
 const loader = new GLTFLoader();
 
 loader.load(
-    './haunted_house.glb',
-    (gltf) => {
+    "./haunted_house.glb",
+
+    (gltf)=>{
 
         const model = gltf.scene;
 
-        model.scale.set(1,1,1);
+        model.position.set(0,0,0);
+
+        model.scale.set(
+            1,
+            1,
+            1
+        );
+
+        model.traverse((child)=>{
+
+            if(child.isMesh){
+
+                child.castShadow = true;
+                child.receiveShadow = true;
+
+                if(child.material){
+
+                    child.material.side =
+                    THREE.DoubleSide;
+
+                    child.material.needsUpdate =
+                    true;
+                }
+            }
+        });
 
         scene.add(model);
 
-        console.log("House Loaded");
+        console.log("GLB Loaded");
+        console.log(model);
 
     },
-    undefined,
-    (error) => {
+
+    (xhr)=>{
+        console.log(
+            (xhr.loaded/xhr.total*100)
+            + "% loaded"
+        );
+    },
+
+    (error)=>{
         console.error(error);
     }
 );
 
-// Movement
-const keys = {};
+/* ANIMATION */
 
-document.addEventListener('keydown', (e)=>{
-    keys[e.code] = true;
-});
+function animate(){
 
-document.addEventListener('keyup', (e)=>{
-    keys[e.code] = false;
-});
+    requestAnimationFrame(
+        animate
+    );
 
-const speed = 0.08;
+    if(controls.isLocked){
 
-function animate() {
+        if(keys["KeyW"])
+            controls.moveForward(speed);
 
-    requestAnimationFrame(animate);
+        if(keys["KeyS"])
+            controls.moveForward(-speed);
 
-    if (controls.isLocked) {
+        if(keys["KeyA"])
+            controls.moveRight(-speed);
 
-        if (keys['KeyW']) controls.moveForward(speed);
-        if (keys['KeyS']) controls.moveForward(-speed);
-
-        if (keys['KeyA']) controls.moveRight(-speed);
-        if (keys['KeyD']) controls.moveRight(speed);
+        if(keys["KeyD"])
+            controls.moveRight(speed);
     }
 
-    renderer.render(scene, camera);
+    renderer.render(
+        scene,
+        camera
+    );
 }
 
 animate();
 
-window.addEventListener('resize', ()=>{
+/* RESIZE */
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+window.addEventListener(
+    "resize",
+    ()=>{
 
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
-});
+        camera.aspect =
+        window.innerWidth /
+        window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+    }
+);
 
 </script>
 
